@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+
+<html>
+<head lang="en">
+<meta charset="utf-8"/>
+<meta content="ie=edge" http-equiv="x-ua-compatible"/>
+<title>
+      WorldCast: World-Consistent Character Video Generation with Large-Angle Camera Control
+    </title>
+<meta content="WorldCast: World-Consistent Character Video Generation with Large-Angle Camera Control." name="description"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="https://stable-virtual-camera.github.io/img/seva.png" property="og:image"/>
+<meta content="image/png" property="og:image:type"/>
+<meta content="1216" property="og:image:width"/>
+<meta content="832" property="og:image:height"/>
+<meta content="website" property="og:type"/>
+<meta content="https://stable-virtual-camera.github.io/" property="og:url"/>
+<meta content="WorldCast: World-Consistent Character Video Generation with Large-Angle Camera Control" property="og:title"/>
+<meta content="" property="og:description"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="WorldCast: World-Consistent Character Video Generation with Large-Angle Camera Control" name="twitter:title"/>
+<meta content="WorldCast: World-Consistent Character Video Generation with Large-Angle Camera Control." name="twitter:description"/>
+<meta content="https://stable-virtual-camera.github.io/img/seva.png" name="twitter:image"/>
+<link href="img/favicon.png" rel="icon"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" rel="stylesheet"/>
+<link href="css/app.css" rel="stylesheet"/>
+<link href="css/fontawesome.all.min.css" rel="stylesheet"/>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-8ZERS5BVPS"></script>
+<script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-8ZERS5BVPS");
+    </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.3/clipboard.min.js"></script>
+<script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+<script async="" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML" type="text/javascript"></script>
+<script defer="" src="js/fontawesome.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+<script src="js/app.js"></script>
+<style>
+      .highlight-text {
+        background-color: #fff3cd;
+        padding: 2px 5px;
+        border-radius: 3px;
+        color: #000;
+        transition: all 0.3s ease;
+      }
+    </style>
+</head>
+<body style="
+      padding: 5%;
+      padding-top: min(15px, 5%);
+      padding-bottom: min(5px, 5%);
+      width: 100%;
+    ">
+<div class="container-lg text-center" id="main" style="max-width: 1500px; margin: auto">
+<header role="banner">
+<div class="row">
+<h1 class="col-md-8 offset-md-2 text-center">
+<a style="font-size: 35px"><b>WorldCast</b>: <br/>World-Consistent Character Video Generation
+              with Large-Angle Camera Control<br/>
+</a>
+</h1>
+</div>
+</header>
+<main role="main">
+<div class="toc-block" id="toc-sidebar" style="
+            position: fixed;
+            left: 10px;
+            top: 20%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+          ">
+<h5 style="margin-bottom: 10px">Sections</h5>
+<ul id="toc-list" style="list-style: none; padding: 0; margin: 0; text-align: left"></ul>
+</div>
+<!-- Bootstrap Modal -->
+<div aria-hidden="true" class="modal fade" id="imageModal" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-body text-center">
+<img class="img-fluid" id="modalImage"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Introduction Section -->
+<div class="row">
+<div class="col-md-8 offset-md-2">
+<h2 id="intro" style="text-align: left">Hi there,</h2>
+<p class="text-justify" style="text-align: left">
+              We are excited to present
+              <strong>WorldCast</strong>
+              , a framework for world-consistent character video generation under
+              <strong>large-angle camera motions</strong>. Given an initial
+              frame and a target camera trajectory that combines rotation,
+              translation, radius variation, and arbitrary initial azimuths,
+              WorldCast synthesizes a video that faithfully follows the camera
+              path while preserving the character's geometry, appearance, and
+              identity across viewpoints.
+</p>
+<video autoplay loop muted playsinline preload="metadata" class="w-100 d-block mx-auto" src="assets/hero/orig_exec_landscape_2traj.mp4"></video>
+<br/>
+<video autoplay loop muted playsinline preload="metadata" class="d-block mx-auto" style="max-width: 60%;" src="assets/hero/A360-031_portrait_2traj.mp4"></video>
+<br/>
+<p class="text-justify" style="text-align: left">
+              Large-angle viewpoint changes expose character regions unseen in
+              the initial frame, leading to geometric distortion, appearance
+              degradation, and identity drift. WorldCast tackles these coupled
+              challenges with explicit 3D guidance: it back-projects the
+              initial frame into a point cloud with estimated depth, aligns
+              the cloud's scale to the target trajectory, and renders it along
+              the path to obtain geometric guidance and coverage masks.
+              <span class="highlight-text">To complement the incomplete character information, we introduce
+              Geometry-Aligned Memory Attention (GAMA), which retrieves and
+              injects view-relevant character features from multi-view anchors
+              expressed in a shared coordinate frame.</span>
+              <!-- There are a lot of videos on this page, please be patient for them to load while we are trying to improve loading speed. -->
+</p>
+<p class="text-justify" style="text-align: left">
+<strong>Best,</strong><br/>
+<strong>Authors of WorldCast</strong>
+</p>
+</div>
+</div>
+<br/><br/><br/><br/>
+<!-- Gallery Section -->
+<div class="row">
+<div class="col-md-8 offset-md-2">
+<h2 id="gallery" style="text-align: left">Gallery</h2>
+
+<style>
+.gallery-cat-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-top: 32px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #4a90e2;
+  display: inline-block;
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.gallery-grid > div {
+  display: flex;
+  background: transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: var(--ar, 1.1429);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+.gallery-grid.solo-wide > div { grid-column: 1 / -1; }
+.gallery-grid.solo-center { max-width: 55%; margin: 0 auto 12px; }
+.gallery-grid .gallery-anchor {
+  width: 50%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.gallery-grid .gallery-video {
+  width: 50%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+@media (max-width: 768px) {
+  .gallery-grid { grid-template-columns: 1fr; }
+  .gallery-grid.solo-center { max-width: 80%; }
+}
+</style>
+<div class="row"><div class="col-md-12"><div class="gallery-cat-title">Character</div></div></div>
+<div class="gallery-grid" style="--ar: 3.4667">
+<!-- A360_10: 84080c66-2ee2-4e82-b1a3-d42b533d72c5 landscape lemniscate -->
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/A360_10.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="84080c66-2ee2-4e82-b1a3-d42b533d72c5" data-orientation="landscape" data-trajectory="lemniscate" src="assets/gallery/videos/A360_10.mp4"></video></div>
+<!-- A360_11: 5275110a-864d-4597-aad3-3cbd3a72e3d3 landscape smoothring_t35 -->
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/A360_11.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="5275110a-864d-4597-aad3-3cbd3a72e3d3" data-orientation="landscape" data-trajectory="smoothring_t35" src="assets/gallery/videos/A360_11.mp4"></video></div>
+<!-- A360_4: A360-006 landscape lemniscate -->
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/A360_4.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="A360-006" data-orientation="landscape" data-trajectory="lemniscate" src="assets/gallery/videos/A360_4.mp4"></video></div>
+<!-- A360_9: 32b38d8a-5a19-45e0-8cd7-9fa5270c8bf4 landscape smoothring_t35 -->
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/A360_9.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="32b38d8a-5a19-45e0-8cd7-9fa5270c8bf4" data-orientation="landscape" data-trajectory="smoothring_t35" src="assets/gallery/videos/A360_9.mp4"></video></div>
+</div>
+<div class="gallery-grid" style="--ar: 1.1429">
+<!-- A360_12: A360-001 portrait lemniscate -->
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/A360_12.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="A360-001" data-orientation="portrait" data-trajectory="lemniscate" src="assets/gallery/videos/A360_12.mp4"></video></div>
+<!-- A360_1: A360-015 portrait flatring -->
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/A360_1.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="A360-015" data-orientation="portrait" data-trajectory="flatring" src="assets/gallery/videos/A360_1.mp4"></video></div>
+<!-- A360_2: A360-026 portrait flatring -->
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/A360_2.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="A360-026" data-orientation="portrait" data-trajectory="flatring" src="assets/gallery/videos/A360_2.mp4"></video></div>
+<!-- A360_3: A360-011 portrait lemniscate -->
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/A360_3.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="A360-011" data-orientation="portrait" data-trajectory="lemniscate" src="assets/gallery/videos/A360_3.mp4"></video></div>
+<!-- A360_5: A360-013 portrait smoothring_t35 -->
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/A360_5.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="A360-013" data-orientation="portrait" data-trajectory="smoothring_t35" src="assets/gallery/videos/A360_5.mp4"></video></div>
+<!-- A360_6: A360-020 portrait flatring -->
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/A360_6.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="A360-020" data-orientation="portrait" data-trajectory="flatring" src="assets/gallery/videos/A360_6.mp4"></video></div>
+<!-- A360_7: A360-035 portrait lemniscate -->
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/A360_7.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="A360-035" data-orientation="portrait" data-trajectory="lemniscate" src="assets/gallery/videos/A360_7.mp4"></video></div>
+<!-- A360_8: A360-021 portrait smoothring_t35 -->
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/A360_8.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" data-case-id="A360-021" data-orientation="portrait" data-trajectory="smoothring_t35" src="assets/gallery/videos/A360_8.mp4"></video></div>
+</div>
+<div class="row"><div class="col-md-12"><div class="gallery-cat-title">Animal</div></div></div>
+<div class="gallery-grid" style="--ar: 3.4667">
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/AN_1.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_1.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/AN_2.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_2.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/AN_3.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_3.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/AN_4.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_4.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/AN_5.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_5.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/AN_7.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_7.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/AN_8.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_8.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/AN_9.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_9.mp4"></video></div>
+</div>
+<div class="gallery-grid" style="--ar: 1.1429">
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/AN_6.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_6.mp4"></video></div>
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/AN_10.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/AN_10.mp4"></video></div>
+</div>
+<div class="row"><div class="col-md-12"><div class="gallery-cat-title">Object</div></div></div>
+<div class="gallery-grid" style="--ar: 3.4667">
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/OB_1.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/OB_1.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/OB_2.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/OB_2.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/OB_3.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/OB_3.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/OB_5.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/OB_5.mp4"></video></div>
+</div>
+<div class="gallery-grid" style="--ar: 1.1429">
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/OB_4.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/OB_4.mp4"></video></div>
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/OB_6.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/OB_6.mp4"></video></div>
+</div>
+<div class="row"><div class="col-md-12"><div class="gallery-cat-title">Anime</div></div></div>
+<div class="gallery-grid" style="--ar: 3.4667">
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/SG_2.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/SG_2.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/SG_3.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/SG_3.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/SG_4.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/SG_4.mp4"></video></div>
+<div data-orientation="landscape"><img class="gallery-anchor" src="assets/gallery/anchors/SG_5.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/SG_5.mp4"></video></div>
+</div>
+<div class="gallery-grid" style="--ar: 0.8936">
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/SG_1.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/SG_1.mp4"></video></div>
+<div data-orientation="portrait"><img class="gallery-anchor" src="assets/gallery/anchors/SG_6.png" loading="lazy"/><video class="gallery-video" loop muted playsinline preload="none" src="assets/gallery/videos/SG_6.mp4"></video></div>
+</div>
+
+<!-- Anchor + Input Image Section -->
+<div class="row">
+<div class="col-md-8 offset-md-2">
+<h2 id="anchor-input" style="text-align: left">Anchor + Input Image</h2>
+<p class="text-justify" style="text-align: left">
+              Select a trajectory schematic and a scene to load the corresponding generated video.
+            </p>
+<style>
+.traj-pill, .scene-pill {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f8f9fa;
+  transition: all 0.2s;
+}
+.traj-pill { padding: 8px; }
+.traj-pill img { width: 120px; height: 100px; object-fit: contain; display: block; }
+.traj-pill .traj-label { text-align: center; font-size: 12px; margin-top: 4px; color: #495057; }
+.traj-pill.active { border-color: #4a90e2; background: #e7f1ff; }
+.traj-pill.active .traj-label { color: #4a90e2; font-weight: 600; }
+.scene-pill { width: 120px; height: 120px; background: transparent; }
+.scene-pill img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scene-pill.active { border-color: #4a90e2; }
+#singleview-video { display: block; margin: 0 auto; max-width: 100%; max-height: 600px; background: transparent; }
+</style>
+
+<div class="mb-3" style="display: grid; grid-template-columns: repeat(4, 120px); gap: 8px; justify-content: center;">
+<div class="scene-pill active" data-scene="A360-005"><img src="assets/singleview/A360-005/input.png"/></div>
+<div class="scene-pill" data-scene="A360-017"><img src="assets/singleview/A360-017/input.png"/></div>
+<div class="scene-pill" data-scene="A360-030"><img src="assets/singleview/A360-030/input.png"/></div>
+<div class="scene-pill" data-scene="A360-031"><img src="assets/singleview/A360-031/input.png"/></div>
+<div class="scene-pill" data-scene="A360-065"><img src="assets/singleview/A360-065/input.png"/></div>
+<div class="scene-pill" data-scene="STYLE-015"><img src="assets/singleview/STYLE-015/input.png"/></div>
+<div class="scene-pill" data-scene="ANM-002"><img src="assets/singleview/ANM-002/input.png"/></div>
+<div class="scene-pill" data-scene="ANM-004"><img src="assets/singleview/ANM-004/input.png"/></div>
+<div class="scene-pill" data-scene="ANM-010"><img src="assets/singleview/ANM-010/input.png"/></div>
+<div class="scene-pill" data-scene="OB-003"><img src="assets/singleview/OB-003/input.png"/></div>
+<div class="scene-pill" data-scene="OBJ-001"><img src="assets/singleview/OBJ-001/input.png"/></div>
+<div class="scene-pill" data-scene="f04eb8f1-d6d5-45fc-a7a9-5629e0e29600"><img src="assets/singleview/f04eb8f1-d6d5-45fc-a7a9-5629e0e29600/input.png"/></div>
+</div>
+<div class="col-12"><video id="singleview-video" loop muted playsinline preload="none" src="assets/singleview/A360-005/pushpull_180.mp4"></video></div>
+<div class="d-flex flex-nowrap justify-content-center gap-2 mb-3">
+<div class="traj-pill active" data-traj="pushpull_180"><img src="assets/traj_schematics/arc_pushpull_s180_w2.png"/><div class="traj-label">pushpull_180</div></div>
+<div class="traj-pill" data-traj="orbit_360"><img src="assets/traj_schematics/flatring.png"/><div class="traj-label">orbit_360</div></div>
+<div class="traj-pill" data-traj="lemniscate"><img src="assets/traj_schematics/lemniscate.png"/><div class="traj-label">lemniscate</div></div>
+<div class="traj-pill" data-traj="orbit_tilt_360"><img src="assets/traj_schematics/smoothring_t35.png"/><div class="traj-label">orbit_tilt_360</div></div>
+<div class="traj-pill" data-traj="zoom_out"><img src="assets/traj_schematics/zoom_out.png"/><div class="traj-label">zoom_out</div></div>
+</div>
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const trajPills = document.querySelectorAll(".traj-pill");
+  const scenePills = document.querySelectorAll(".scene-pill");
+  const video = document.getElementById("singleview-video");
+  let currentTraj = "pushpull_180";
+  let currentScene = "A360-005";
+  function updateVideo() {
+    video.src = `assets/singleview/${currentScene}/${currentTraj}.mp4`;
+    video.load();
+    video.play().catch(() => {});
+  }
+  trajPills.forEach(pill => {
+    pill.addEventListener("click", function () {
+      trajPills.forEach(p => p.classList.remove("active"));
+      this.classList.add("active");
+      currentTraj = this.dataset.traj;
+      updateVideo();
+    });
+  });
+  scenePills.forEach(pill => {
+    pill.addEventListener("click", function () {
+      scenePills.forEach(p => p.classList.remove("active"));
+      this.classList.add("active");
+      currentScene = this.dataset.scene;
+      updateVideo();
+    });
+  });
+});
+</script>
+
+<br/><br/><br/><br/>
+<!-- Comparison Section -->
+<div class="row">
+<div class="col-md-8 offset-md-2">
+<h2 id="comparison" style="text-align: left">
+              Comparison with Existing Models
+            </h2>
+</div>
+</div>
+
+<style>
+.method-comparison-section { margin-top: 48px; }
+.method-comparison-section h3 { text-align: center; margin-bottom: 20px; }
+.method-case-pills { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+.method-case-pill {
+  padding: 6px 18px; border-radius: 20px; cursor: pointer;
+  background: #e9ecef; color: #495057; font-weight: 500;
+  transition: all 0.2s;
+}
+.method-case-pill.active { background: #4a90e2; color: #fff; }
+.method-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.method-cell {
+  position: relative;
+  background: #000;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+.method-cell.ours {
+  border: 3px solid #ffc107;
+  box-shadow: 0 0 12px rgba(255, 193, 7, 0.6);
+}
+.method-cell video {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  display: block;
+  background: #000;
+}
+.method-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  padding: 4px 2px;
+  font-weight: 500;
+}
+.method-label.ours-label {
+  background: rgba(255, 193, 7, 0.92);
+  color: #000;
+  font-weight: 700;
+}
+@media (max-width: 1200px) { .method-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) { .method-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 480px) { .method-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+
+<div class="row method-comparison-section">
+<div class="col-12">
+<div class="method-anchors-display">
+<h4 style="text-align: center; margin-bottom: 12px;">Anchor Views (4 Body Views, 田 Grid)</h4>
+<img id="method-anchors-img" src="assets/comparison_methods/anchors_A360-005.png" alt="Anchors A360-005" style="display: block; margin: 0 auto; max-width: 400px; width: 100%;"/>
+</div>
+<div class="method-case-pills">
+<div class="method-case-pill active" data-case="A360-005">case01_orbit_360_push</div>
+<div class="method-case-pill" data-case="A360-030">case02_orbit_360_push</div>
+</div>
+<div class="method-grid" id="method-grid">
+<div class="method-cell ours"><video loop muted playsinline preload="none" data-method="WorldCast" src="assets/comparison_methods/WorldCast/A360-005.mp4"></video><div class="method-label ours-label">WorldCast (Ours)</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="gen3c" src="assets/comparison_methods/gen3c/A360-005.mp4"></video><div class="method-label">GEN3C</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="lyra" src="assets/comparison_methods/lyra/A360-005.mp4"></video><div class="method-label">Lyra</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="mvgenmaster_anchor" src="assets/comparison_methods/mvgenmaster_anchor/A360-005.mp4"></video><div class="method-label">MVGM (anchor)</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="mvgenmaster_noanchor" src="assets/comparison_methods/mvgenmaster_noanchor/A360-005.mp4"></video><div class="method-label">MVGM (noanchor)</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="recammaster" src="assets/comparison_methods/recammaster/A360-005.mp4"></video><div class="method-label">ReCamMaster</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="uni3c" src="assets/comparison_methods/uni3c/A360-005.mp4"></video><div class="method-label">Uni3C</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="viewcrafter_anchor" src="assets/comparison_methods/viewcrafter_anchor/A360-005.mp4"></video><div class="method-label">ViewCrafter (anchor)</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="viewcrafter_noanchor" src="assets/comparison_methods/viewcrafter_noanchor/A360-005.mp4"></video><div class="method-label">ViewCrafter (noanchor)</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="depthdirector" src="assets/comparison_methods/depthdirector/A360-005.mp4"></video><div class="method-label">DepthDirector</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="dualcamctrl" src="assets/comparison_methods/dualcamctrl/A360-005.mp4"></video><div class="method-label">DualCamCtrl</div></div>
+<div class="method-cell"><video loop muted playsinline preload="none" data-method="cameraanything" src="assets/comparison_methods/cameraanything/A360-005.mp4"></video><div class="method-label">CameraAnything</div></div>
+</div>
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const casePills = document.querySelectorAll(".method-case-pill");
+  const methodVideos = document.querySelectorAll("#method-grid video");
+  const anchorsImg = document.getElementById("method-anchors-img");
+  let currentCase = "A360-005";
+  casePills.forEach(pill => {
+    pill.addEventListener("click", function () {
+      casePills.forEach(p => p.classList.remove("active"));
+      this.classList.add("active");
+      currentCase = this.dataset.case;
+      methodVideos.forEach(v => {
+        v.src = `assets/comparison_methods/${v.dataset.method}/${currentCase}.mp4`;
+        v.load();
+        v.play().catch(() => {});
+      });
+      anchorsImg.src = `assets/comparison_methods/anchors_${currentCase}.png`;
+      anchorsImg.alt = `Anchors ${currentCase}`;
+    });
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Play below-fold videos only when visible to avoid mass-downloading on load
+  const lazyVideos = document.querySelectorAll("video:not([autoplay])");
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.play().catch(() => {});
+      else e.target.pause();
+    });
+  }, { rootMargin: "100px", threshold: 0.2 });
+  lazyVideos.forEach(v => io.observe(v));
+});
+</script>
+
+<br/><br/><br/><br/>
+</main>
+<footer>
+<div class="row">
+<div class="col-md-8 offset-md-2 text-start">
+<p class="text-justify" style="text-align: right">
+<i>
+                The website template was modified based on
+                <a href="https://cat3d.github.io/index.html">CAT3D</a>.
+              </i>
+</p>
+</div>
+</div>
+</footer>
+</div>
+<script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Get all poster images in the masonry container
+        const masonryContainer = document.getElementById("masonryContainer");
+        const posters = masonryContainer.querySelectorAll("video[poster]");
+        let loadedPosters = 0;
+        const totalPosters = posters.length;
+
+        // Function to initialize masonry
+        function initMasonry() {
+          const masonry = new Masonry(masonryContainer, {
+            itemSelector: ".masonry-item",
+            columnWidth: ".masonry-sizer",
+            percentPosition: true,
+          });
+
+          // Re-layout masonry after a short delay to ensure proper positioning
+          setTimeout(() => {
+            masonry.layout();
+          }, 100);
+
+          return masonry;
+        }
+
+        // Track when all posters have loaded
+        function checkAllPostersLoaded() {
+          loadedPosters++;
+          if (loadedPosters >= totalPosters) {
+            console.log("All posters loaded, initializing masonry");
+            const masonry = initMasonry();
+
+            // Re-layout masonry when videos load or play
+            const videos = masonryContainer.querySelectorAll("video");
+            videos.forEach((video) => {
+              video.addEventListener("loadeddata", () => {
+                masonry.layout();
+              });
+
+              video.addEventListener("play", () => {
+                masonry.layout();
+              });
+            });
+          }
+        }
+
+        // Preload all poster images
+        if (totalPosters > 0) {
+          posters.forEach((video) => {
+            const img = new Image();
+            img.onload = checkAllPostersLoaded;
+            img.onerror = checkAllPostersLoaded; // Count errors too to avoid blocking
+            img.src = video.getAttribute("poster");
+          });
+        } else {
+          // If no posters, initialize masonry directly
+          initMasonry();
+        }
+
+        // Fallback: Initialize masonry after a timeout even if not all posters loaded
+        setTimeout(() => {
+          if (loadedPosters < totalPosters) {
+            console.log("Fallback: Initializing masonry after timeout");
+            initMasonry();
+          }
+        }, 3000);
+      });
+    </script>
+</body>
+</html>
