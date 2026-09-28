@@ -348,8 +348,10 @@ document.addEventListener("DOMContentLoaded", function () {
 .method-case-pill.active { background: #4a90e2; color: #fff; }
 .method-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 .method-cell {
   position: relative;
@@ -384,7 +386,7 @@ document.addEventListener("DOMContentLoaded", function () {
   color: #000;
   font-weight: 700;
 }
-@media (max-width: 1200px) { .method-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 1200px) { .method-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 768px) { .method-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 480px) { .method-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>
